@@ -7,7 +7,7 @@ Step-by-step instructions for setting up FlightTracker in a Google Cloud Skills 
 Make sure you have:
 - [ ] All Python files written and ready
 - [ ] `requirements.txt` ready
-- [ ] `setup.py` ready
+- [ ] `setup.py` and `run_pipeline.py` ready
 - [ ] Know your GCP project ID (you'll get it when the lab starts)
 
 ## During the Lab (1-1.5 hours)
@@ -20,8 +20,8 @@ Make sure you have:
 
 ```bash
 # If using GitHub:
-git clone https://github.com/Moya-Art/flight-tracker.git
-cd flight-tracker
+git clone https://github.com/Moya-Art/Flight-Tracker.git
+cd Flight-Tracker
 
 # If uploading files:
 # Use the Cloud Shell "Upload" button
@@ -34,38 +34,47 @@ cd flight-tracker
 gcloud config get-value project
 ```
 
-### Step 3: Set Environment Variables (1 min)
+### Step 3: Create Service Account and Key (3 min)
 
 ```bash
 # Replace with YOUR project ID from the lab
-export GCP_PROJECT_ID="your-lab-project-id"
+export PROJECT_ID="your-lab-project-id"
 
-# Create a service account key
+# Create a service account
 gcloud iam service-accounts create flight-tracker-sa \
     --display-name "FlightTracker Service Account"
 
 # Grant roles
-gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
-    --member="serviceAccount:flight-tracker-sa@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:flight-tracker-sa@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/bigquery.admin"
 
-gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
-    --member="serviceAccount:flight-tracker-sa@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:flight-tracker-sa@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/pubsub.admin"
 
-gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
-    --member="serviceAccount:flight-tracker-sa@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:flight-tracker-sa@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/storage.admin"
 
 # Download the key
 gcloud iam service-accounts keys create config/service-account-key.json \
-    --iam-account=flight-tracker-sa@$GCP_PROJECT_ID.iam.gserviceaccount.com
-
-# Set the credentials environment variable
-export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/config/service-account-key.json"
+    --iam-account=flight-tracker-sa@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
-### Step 4: Enable APIs (1 min)
+### Step 4: Create .env File (1 min)
+
+```bash
+# Create .env from template
+cp .env.example .env
+
+# Edit with your project ID
+echo "GCP_PROJECT_ID=$PROJECT_ID" > .env
+echo "GCP_REGION=us-central1" >> .env
+echo "GOOGLE_APPLICATION_CREDENTIALS=config/service-account-key.json" >> .env
+```
+
+### Step 5: Enable APIs (1 min)
 
 ```bash
 gcloud services enable bigquery.googleapis.com
@@ -73,62 +82,47 @@ gcloud services enable pubsub.googleapis.com
 gcloud services enable storage.googleapis.com
 ```
 
-### Step 5: Install Dependencies (2 min)
+### Step 6: Install Dependencies (2 min)
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 6: Run Setup Script (2 min)
+### Step 7: Run the Full Pipeline (20-30 min)
 
+**Option A: Run everything at once (recommended)**
 ```bash
+# Runs: setup → batch ingestion → streaming (10 min) → cleaning
+python run_pipeline.py --stream-minutes 10
+```
+
+**Option B: Run step by step**
+```bash
+# 1. Setup GCP infrastructure
 python setup.py
-```
 
-This creates:
-- BigQuery dataset `flight_tracker` with tables
-- Pub/Sub topic `flight-updates` and subscription
-- Cloud Storage bucket
-
-### Step 7: Run Batch Ingestion (5 min)
-
-```bash
+# 2. Batch ingestion (historical data)
 python src/batch_ingestion.py
-```
 
-This downloads current flight data and loads it into BigQuery.
-Check BigQuery console to see the data.
-
-### Step 8: Run Streaming (15-20 min)
-
-Open TWO terminals:
-
-**Terminal 1 — Producer:**
-```bash
+# 3. Streaming (open TWO terminals)
+# Terminal 1:
 python src/stream_ingestion.py
-```
-
-**Terminal 2 — Subscriber:**
-```bash
+# Terminal 2:
 python src/subscriber.py
-```
+# Let it run for 10-15 minutes, then Ctrl+C both
 
-Let it run for 10-15 minutes to collect streaming data.
-
-### Step 9: Run Data Cleaning (2 min)
-
-```bash
+# 4. Data cleaning
 python src/data_cleaning.py
 ```
 
-### Step 10: Run SQL Queries (10 min)
+### Step 8: Run SQL Queries (10 min)
 
-1. Go to BigQuery Console
+1. Go to [BigQuery Console](https://console.cloud.google.com/bigquery)
 2. Run each query from `sql/queries.sql`
 3. Run each query from `sql/ml_model.sql`
 4. **TAKE SCREENSHOTS** of the results for your report
 
-### Step 11: Create Dashboard (15 min)
+### Step 9: Create Dashboard (15 min)
 
 1. Go to [Looker Studio](https://lookerstudio.google.com/)
 2. Create new report
@@ -140,7 +134,7 @@ python src/data_cleaning.py
    - **Scatter plot:** Speed vs altitude (showing anomaly clusters)
 5. **TAKE SCREENSHOTS** for your report
 
-### Step 12: Export for Report (5 min)
+### Step 10: Export for Report (5 min)
 
 ```bash
 # Download query results as CSV for the report
@@ -155,7 +149,7 @@ python src/data_cleaning.py
 - [ ] Write the report using the template
 - [ ] Insert screenshots into the report
 - [ ] Create PowerPoint presentation
-- [ ] Push code to GitHub
+- [ ] Push code to GitHub (if not already done)
 
 ## Troubleshooting
 
@@ -184,4 +178,13 @@ gcloud services enable bigquery.googleapis.com pubsub.googleapis.com storage.goo
 ```bash
 # Re-run setup
 python setup.py
+```
+
+### .env not loading
+```bash
+# Make sure python-dotenv is installed
+pip install python-dotenv
+
+# Check that .env exists
+cat .env
 ```
