@@ -75,8 +75,9 @@ A Big Data pipeline that ingests, processes, and visualizes global flight data f
 ```
 flight-tracker/
 ├── config/
-│   ├── settings.py          # Central configuration
-│   └── schema.json          # BigQuery table schema
+│   ├── settings.py          # Central configuration (loads .env)
+│   ├── schema.json          # BigQuery table schema
+│   └── gcp_setup.md         # Step-by-step lab setup guide
 ├── src/
 │   ├── batch_ingestion.py   # Batch: API → Cloud Storage → BigQuery
 │   ├── stream_ingestion.py  # Stream: API → Pub/Sub (producer)
@@ -86,6 +87,8 @@ flight-tracker/
 │   ├── queries.sql          # Analysis queries (Objetivo 1)
 │   └── ml_model.sql         # BigQuery ML anomaly detection (Objetivo 2)
 ├── setup.py                 # One-time GCP infrastructure setup
+├── run_pipeline.py          # Orchestrator: runs entire pipeline at once
+├── .env.example             # Template for environment variables
 ├── requirements.txt         # Python dependencies
 ├── .gitignore               # Excludes credentials and data
 └── README.md                # This file
@@ -102,24 +105,29 @@ flight-tracker/
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/Moya-Art/flight-tracker.git
-cd flight-tracker
+git clone https://github.com/Moya-Art/Flight-Tracker.git
+cd Flight-Tracker
 
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Set your GCP project ID
-export GCP_PROJECT_ID="your-project-id"
+# 3. Create .env from template
+cp .env.example .env
+# Edit .env with your GCP project ID and credentials path
 
-# 4. Set your service account key path
-export GOOGLE_APPLICATION_CREDENTIALS="config/service-account-key.json"
-
-# 5. Create GCP infrastructure
+# 4. Create GCP infrastructure
 python setup.py
 ```
 
 ### Run the Pipeline
 
+**Option A: All at once (recommended)**
+```bash
+# Runs: setup → batch ingestion → streaming (10 min) → cleaning
+python run_pipeline.py --stream-minutes 10
+```
+
+**Option B: Step by step**
 ```bash
 # Terminal 1: Start the streaming producer
 python src/stream_ingestion.py
@@ -170,6 +178,16 @@ python src/data_cleaning.py
 - **Data:** Aircraft position, altitude, speed, heading, country of origin
 - **Update frequency:** ~5-15 seconds
 - **Coverage:** Global (all aircraft broadcasting ADS-B)
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in:
+
+```env
+GCP_PROJECT_ID=your-project-id
+GCP_REGION=us-central1
+GOOGLE_APPLICATION_CREDENTIALS=config/service-account-key.json
+```
 
 ## License
 
