@@ -1,80 +1,59 @@
-# GCP Lab Setup Guide
+# GCP Lab Setup Guide — skills.google
 
-Step-by-step instructions for setting up FlightTracker in a Google Cloud Skills Boost lab.
+Step-by-step instructions for setting up FlightTracker using a temporary GCP account from skills.google.
 
-## Before the Lab
+## How It Works
 
-Make sure you have:
-- [ ] All Python files written and ready
-- [ ] `requirements.txt` ready
-- [ ] `setup.py` and `run_pipeline.py` ready
-- [ ] Know your GCP project ID (you'll get it when the lab starts)
+1. Go to https://www.skills.google/
+2. Select a course with long duration (GCP, Big Data, etc.)
+3. They give you a temporary user with GCP access
+4. Use that access to run the pipeline
 
-## During the Lab (1-1.5 hours)
+## During the Lab
 
-### Step 1: Open Cloud Shell (2 min)
+### Step 1: Get Your Credentials
 
-1. Click the **Activate Cloud Shell** button (top right of GCP console)
-2. Wait for the shell to initialize
-3. Clone your repo or upload files:
+Once you're in the course environment:
+- Note your **Project ID** (shown in the GCP console)
+- Note how you authenticate (usually `gcloud auth login` or automatic)
+
+### Step 2: Open Cloud Shell
+
+1. Go to https://console.cloud.google.com/
+2. Click the **Activate Cloud Shell** button (top right)
+3. Wait for it to initialize
+
+### Step 3: Clone the Repo
 
 ```bash
-# If using GitHub:
 git clone https://github.com/Moya-Art/Flight-Tracker.git
 cd Flight-Tracker
-
-# If uploading files:
-# Use the Cloud Shell "Upload" button
 ```
 
-### Step 2: Get Your Project ID (1 min)
+### Step 4: Create .env File
 
 ```bash
-# The lab will give you a project ID, or:
-gcloud config get-value project
+# Create .env with your project ID
+cat > .env << 'EOF'
+GCP_PROJECT_ID=YOUR_PROJECT_ID_HERE
+GCP_REGION=us-central1
+GOOGLE_APPLICATION_CREDENTIALS=config/service-account-key.json
+EOF
 ```
 
-### Step 3: Create Service Account and Key (3 min)
+### Step 5: Authenticate (if needed)
 
 ```bash
-# Replace with YOUR project ID from the lab
-export PROJECT_ID="your-lab-project-id"
+# If the lab requires explicit auth:
+gcloud auth login
 
-# Create a service account
-gcloud iam service-accounts create flight-tracker-sa \
-    --display-name "FlightTracker Service Account"
+# If it's automatic, skip this step
 
-# Grant roles
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:flight-tracker-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/bigquery.admin"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:flight-tracker-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/pubsub.admin"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member="serviceAccount:flight-tracker-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-    --role="roles/storage.admin"
-
-# Download the key
-gcloud iam service-accounts keys create config/service-account-key.json \
-    --iam-account=flight-tracker-sa@$PROJECT_ID.iam.gserviceaccount.com
+# Set the project
+gcloud config set project YOUR_PROJECT_ID_HERE
 ```
 
-### Step 4: Create .env File (1 min)
-
-```bash
-# Create .env from template
-cp .env.example .env
-
-# Edit with your project ID
-echo "GCP_PROJECT_ID=$PROJECT_ID" > .env
-echo "GCP_REGION=us-central1" >> .env
-echo "GOOGLE_APPLICATION_CREDENTIALS=config/service-account-key.json" >> .env
-```
-
-### Step 5: Enable APIs (1 min)
+### Step 6: Enable APIs
 
 ```bash
 gcloud services enable bigquery.googleapis.com
@@ -82,109 +61,113 @@ gcloud services enable pubsub.googleapis.com
 gcloud services enable storage.googleapis.com
 ```
 
-### Step 6: Install Dependencies (2 min)
+### Step 7: Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 7: Run the Full Pipeline (20-30 min)
+### Step 8: Create Service Account (if needed)
 
-**Option A: Run everything at once (recommended)**
+Some labs require a service account for the Python scripts. If the automatic auth doesn't work:
+
 ```bash
-# Runs: setup → batch ingestion → streaming (10 min) → cleaning
-python run_pipeline.py --stream-minutes 10
+# Create service account
+gcloud iam service-accounts create flight-tracker-sa \
+    --display-name "FlightTracker Service Account"
+
+# Grant roles
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID_HERE \
+    --member="serviceAccount:flight-tracker-sa@YOUR_PROJECT_ID_HERE.iam.gserviceaccount.com" \
+    --role="roles/bigquery.admin"
+
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID_HERE \
+    --member="serviceAccount:flight-tracker-sa@YOUR_PROJECT_ID_HERE.iam.gserviceaccount.com" \
+    --role="roles/pubsub.admin"
+
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID_HERE \
+    --member="serviceAccount:flight-tracker-sa@YOUR_PROJECT_ID_HERE.iam.gserviceaccount.com" \
+    --role="roles/storage.admin"
+
+# Download key
+gcloud iam service-accounts keys create config/service-account-key.json \
+    --iam-account=flight-tracker-sa@YOUR_PROJECT_ID_HERE.iam.gserviceaccount.com
+
+# Update .env
+echo "GOOGLE_APPLICATION_CREDENTIALS=config/service-account-key.json" >> .env
 ```
 
-**Option B: Run step by step**
+### Step 9: Run the Pipeline
+
 ```bash
-# 1. Setup GCP infrastructure
+# Option A: All at once (recommended)
+python run_pipeline.py --stream-minutes 10
+
+# Option B: Step by step
 python setup.py
-
-# 2. Batch ingestion (historical data)
 python src/batch_ingestion.py
-
-# 3. Streaming (open TWO terminals)
-# Terminal 1:
-python src/stream_ingestion.py
-# Terminal 2:
-python src/subscriber.py
-# Let it run for 10-15 minutes, then Ctrl+C both
-
-# 4. Data cleaning
+# Terminal 1: python src/stream_ingestion.py
+# Terminal 2: python src/subscriber.py
+# (wait 10-15 min, then Ctrl+C both)
 python src/data_cleaning.py
 ```
 
-### Step 8: Run SQL Queries (10 min)
+### Step 10: Run SQL Queries in BigQuery
 
-1. Go to [BigQuery Console](https://console.cloud.google.com/bigquery)
-2. Run each query from `sql/queries.sql`
-3. Run each query from `sql/ml_model.sql`
-4. **TAKE SCREENSHOTS** of the results for your report
+1. Go to https://console.cloud.google.com/bigquery
+2. Select your project
+3. Copy and paste each query from `sql/queries.sql`
+4. Run each query from `sql/ml_model.sql`
+5. **TAKE SCREENSHOTS** of results
 
-### Step 9: Create Dashboard (15 min)
+### Step 11: Create Dashboard in Looker Studio
 
-1. Go to [Looker Studio](https://lookerstudio.google.com/)
+1. Go to https://lookerstudio.google.com/
 2. Create new report
-3. Add BigQuery data source → `flight_tracker.flights_cleaned`
-4. Create these charts:
-   - **Table:** Top 10 countries by flight count
-   - **Bar chart:** Flights by hour of day
-   - **Geo map:** Flights by geographic region
-   - **Scatter plot:** Speed vs altitude (showing anomaly clusters)
+3. Add data source → BigQuery → your project → `flight_tracker` → `flights_cleaned`
+4. Create charts:
+   - Table: Top 10 countries by flight count
+   - Bar chart: Flights by hour of day
+   - Geo map: Flights by geographic region
+   - Scatter plot: Speed vs altitude (anomaly clusters)
 5. **TAKE SCREENSHOTS** for your report
 
-### Step 10: Export for Report (5 min)
+### Step 12: Export Results
 
-```bash
-# Download query results as CSV for the report
-# (Use BigQuery console export button)
-
-# Download screenshots
-# (Right-click → Save Image in Looker Studio)
-```
+- Download query results as CSV (BigQuery export button)
+- Save dashboard screenshots
+- Save any other evidence needed for the report
 
 ## After the Lab
 
 - [ ] Write the report using the template
-- [ ] Insert screenshots into the report
-- [ ] Create PowerPoint presentation
-- [ ] Push code to GitHub (if not already done)
+- [ ] Insert screenshots
+- [ ] Create PowerPoint
+- [ ] Submit to AVA
 
 ## Troubleshooting
 
+### "Permission denied" on API calls
+```bash
+# Try with explicit credentials
+export GOOGLE_APPLICATION_CREDENTIALS=config/service-account-key.json
+```
+
 ### "Project not found"
 ```bash
-gcloud config set project YOUR_PROJECT_ID
+gcloud config set project YOUR_PROJECT_ID_HERE
 ```
 
-### "Permission denied"
+### Python scripts can't find credentials
 ```bash
-# Make sure you're authenticated
-gcloud auth application-default login
+# Check .env exists and has correct values
+cat .env
+
+# Check the key file exists
+ls -la config/service-account-key.json
 ```
 
-### "API not enabled"
+### APIs not enabled
 ```bash
 gcloud services enable bigquery.googleapis.com pubsub.googleapis.com storage.googleapis.com
-```
-
-### Pub/Sub not receiving messages
-- Check that the producer is running
-- Check that the subscription exists
-- Check logs for errors
-
-### BigQuery table not found
-```bash
-# Re-run setup
-python setup.py
-```
-
-### .env not loading
-```bash
-# Make sure python-dotenv is installed
-pip install python-dotenv
-
-# Check that .env exists
-cat .env
 ```
