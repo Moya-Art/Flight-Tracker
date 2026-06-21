@@ -18,7 +18,7 @@ from google.cloud import bigquery, storage
 sys.path.insert(0, ".")
 from config.settings import (
     GCP_PROJECT_ID, GCS_BUCKET, GCS_BATCH_PREFIX,
-    BQ_DATASET, BQ_TABLE_RAW, OPENSKY_API_URL
+    BQ_DATASET, BQ_TABLE_RAW, BQ_TABLE_ACTIVITY_LOG, OPENSKY_API_URL
 )
 
 # ──────────────────────────────────────────────
