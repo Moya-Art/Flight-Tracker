@@ -6,57 +6,7 @@ A Big Data pipeline that ingests, processes, and visualizes global flight data f
 
 ## Architecture
 
-```
-┌─────────────────────┐
-│  OpenSky Network API │  ← Free, no API key needed
-│  (REST endpoint)     │
-└──────────┬──────────┘
-           │
-     ┌─────┴─────┐
-     │           │
-     ▼           ▼
-┌─────────┐  ┌──────────────┐
-│  BATCH   │  │   STREAMING   │
-│ Script   │  │   Producer    │
-│          │  │  (polls 15s)  │
-└────┬─────┘  └──────┬───────┘
-     │               │
-     ▼               ▼
-┌─────────┐  ┌──────────────┐
-│  Cloud   │  │  Cloud Pub/Sub│
-│ Storage  │  │    (topic)    │
-│ (lake)   │  └──────┬───────┘
-└────┬─────┘         │
-     │               ▼
-     │        ┌──────────────┐
-     │        │  Subscriber   │
-     │        │  (consumer)   │
-     │        └──────┬───────┘
-     │               │
-     └───────┬───────┘
-             ▼
-      ┌─────────────┐
-      │   BigQuery   │
-      │ ┌───────────┐│
-      │ │ flights_raw││  ← Raw data (batch + streaming)
-      │ └───────────┘│
-      │ ┌───────────┐│
-      │ │flights_    ││  ← Cleaned, enriched, deduplicated
-      │ │ cleaned    ││
-      │ └───────────┘│
-      │ ┌───────────┐│
-      │ │activity_log││  ← Pipeline execution tracking
-      │ └───────────┘│
-      └──────┬───────┘
-             │
-     ┌───────┴───────┐
-     ▼               ▼
-┌─────────┐  ┌──────────────┐
-│ BigQuery │  │ Looker Studio │
-│   ML     │  │  (Dashboard)  │
-│(KMeans)  │  └──────────────┘
-└─────────┘
-```
+![FlightTracker Architecture](docs/flight-tracker-architecture.svg)
 
 ## Tech Stack
 
@@ -86,6 +36,9 @@ flight-tracker/
 ├── sql/
 │   ├── queries.sql          # Analysis queries (Objetivo 1)
 │   └── ml_model.sql         # BigQuery ML anomaly detection (Objetivo 2)
+├── docs/
+│   ├── flight-tracker-architecture.svg        # Architecture diagram
+│   └── flight-tracker-architecture.excalidraw # Editable source
 ├── setup.py                 # One-time GCP infrastructure setup
 ├── run_pipeline.py          # Orchestrator: runs entire pipeline at once
 ├── .env.example             # Template for environment variables
