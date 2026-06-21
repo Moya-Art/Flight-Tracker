@@ -1,0 +1,41 @@
+# FlightTracker
+# Real-Time Air Traffic Analytics Pipeline
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Credentials — NEVER commit these
+config/service-account-key.json
+*.json.key
+.env
+
+# Data files (too large for git)
+data/
+*.csv
+*.json
+!config/schema.json
+!sql/*.sql
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Google Cloud
+.gcloudignore

@@ -1,0 +1,20 @@
+{
+  "fields": [
+    {"name": "icao24",          "type": "STRING",    "mode": "REQUIRED", "description": "Unique aircraft ICAO 24-bit address"},
+    {"name": "callsign",        "type": "STRING",    "mode": "NULLABLE", "description": "Flight callsign (e.g. LAN123)"},
+    {"name": "origin_country",  "type": "STRING",    "mode": "REQUIRED", "description": "Country of aircraft registration"},
+    {"name": "time_position",   "type": "TIMESTAMP", "mode": "NULLABLE", "description": "Unix timestamp of last position report"},
+    {"name": "last_contact",    "type": "TIMESTAMP", "mode": "NULLABLE", "description": "Unix timestamp of last contact"},
+    {"name": "longitude",       "type": "FLOAT64",   "mode": "NULLABLE", "description": "WGS-84 longitude in decimal degrees"},
+    {"name": "latitude",        "type": "FLOAT64",   "mode": "NULLABLE", "description": "WGS-84 latitude in decimal degrees"},
+    {"name": "baro_altitude",   "type": "FLOAT64",   "mode": "NULLABLE", "description": "Barometric altitude in meters"},
+    {"name": "on_ground",       "type": "BOOLEAN",   "mode": "NULLABLE", "description": "Whether aircraft is on ground"},
+    {"name": "velocity",        "type": "FLOAT64",   "mode": "NULLABLE", "description": "Ground speed in m/s"},
+    {"name": "true_track",      "type": "FLOAT64",   "mode": "NULLABLE", "description": "Heading in degrees clockwise from north"},
+    {"name": "vertical_rate",   "type": "FLOAT64",   "mode": "NULLABLE", "description": "Vertical speed in m/s (positive = climbing)"},
+    {"name": "geo_altitude",    "type": "FLOAT64",   "mode": "NULLABLE", "description": "Geometric altitude in meters"},
+    {"name": "squawk",          "type": "STRING",    "mode": "NULLABLE", "description": "Transponder squawk code"},
+    {"name": "ingestion_source", "type": "STRING",   "mode": "REQUIRED", "description": "Source type: 'batch' or 'streaming'"},
+    {"name": "ingestion_timestamp", "type": "TIMESTAMP", "mode": "REQUIRED", "description": "When this record was ingested"}
+  ]
+}
