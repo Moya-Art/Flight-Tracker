@@ -122,7 +122,7 @@ def save_to_cloud_storage(records, timestamp):
     bucket = storage_client.bucket(GCS_BUCKET)
     
     # Create filename with timestamp for easy identification
-    filename = f"{GCS_PREFIX}flights_{timestamp.strftime('%Y%m%d_%H%M%S')}.json"
+    filename = f"{GCS_BATCH_PREFIX}flights_{timestamp.strftime('%Y%m%d_%H%M%S')}.json"
     blob = bucket.blob(filename)
     
     # Upload as JSON
@@ -234,9 +234,12 @@ def main():
             log_activity(0, "WARNING", "No flights returned from API")
             return
         
-        # Step 3: Save to Data Lake (Cloud Storage)
+        # Step 3: Save to Data Lake (Cloud Storage) — optional, skip if bucket doesn't exist
         timestamp = datetime.now(timezone.utc)
-        save_to_cloud_storage(records, timestamp)
+        try:
+            save_to_cloud_storage(records, timestamp)
+        except Exception as e:
+            logger.warning(f"Cloud Storage skipped (bucket may not exist): {e}")
         
         # Step 4: Load to BigQuery
         load_to_bigquery(records)
