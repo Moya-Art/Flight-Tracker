@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 # Step 1: Create the cleaned table with derived columns
 CREATE_CLEANED_TABLE = f"""
-CREATE TABLE IF NOT EXISTS `{GCP_PROJECT_ID}.{BQ_DATASET}.{BQ_TABLE_CLEANED}`
+CREATE OR REPLACE TABLE `{GCP_PROJECT_ID}.{BQ_DATASET}.{BQ_TABLE_CLEANED}`
 AS SELECT
     -- Original fields
     icao24,

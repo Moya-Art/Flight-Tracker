@@ -75,7 +75,7 @@ SELECT
     baro_altitude,
     vertical_rate,
     geographic_region,
-    predicted_cluster_id,
+    centroid_id AS predicted_cluster_id,
     -- Distance from cluster center (higher = more anomalous)
     ROUND(nearest_centroids_distance[OFFSET(0)].distance, 4) AS anomaly_score
 FROM ML.PREDICT(
@@ -106,7 +106,7 @@ LIMIT 50;
 -- Shows how many flights in each cluster and their characteristics
 -- ─────────────────────────────────────────────
 SELECT
-    predicted_cluster_id AS cluster,
+    centroid_id AS cluster,
     COUNT(*) AS flight_count,
     ROUND(AVG(velocity) * 3.6, 1) AS avg_speed_kmh,
     ROUND(AVG(baro_altitude), 0) AS avg_altitude_m,
@@ -127,5 +127,5 @@ FROM ML.PREDICT(
           AND data_quality_flag = 'VALID'
     )
 )
-GROUP BY predicted_cluster_id
+GROUP BY centroid_id
 ORDER BY avg_anomaly_score DESC;
